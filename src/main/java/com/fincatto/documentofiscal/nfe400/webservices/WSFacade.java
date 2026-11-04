@@ -75,8 +75,6 @@ public class WSFacade implements Closeable {
     private volatile WSAceiteDebitoApuracao wsAceiteDebitoAPuracao;
     private volatile WSCancelametoEvento wsCancelametoEvento;
     private volatile WSInfoEfetPagIntegral wsInfoEfetPagIntegral;
-    private volatile WSEconf wsEconf;
-    private volatile WSCancelamentoEconf wsCancelamentoEconf;
     private volatile WSSolicitacaoApropriacaoCreditoPresumido wsSolicitacaoApropriacaoCreditoPresumido;
     private volatile WSSolicitacaoApropriacaoCreditoCombustivel wsSolicitacaoApropriacaoCreditoCombustivel;
     private volatile WSRouboTransporteAdquirente wsRouboTransporteAdquirente;
@@ -603,10 +601,7 @@ public class WSFacade implements Closeable {
      * @throws Exception
      */
     public NFEnviaEventoRetorno enviaEconf(final String chaveAcesso, final int numeroSequencialEvento, final List<NFDetPagEconf> pagamentos) throws Exception {
-        if (this.wsEconf == null) {
-            this.wsEconf = new WSEconf(this.config, this.httpClient);
-        }
-        return this.wsEconf
+        return new WSEconf(this.config, this.httpClient)
                 .adicionarDadosEvento(chaveAcesso, numeroSequencialEvento, pagamentos)
                 .gerarEnviarEvento();
     }
@@ -622,10 +617,7 @@ public class WSFacade implements Closeable {
      * @throws Exception
      */
     public NFEnviaEventoRetorno enviaCancelamentoEconf(final String chaveAcesso, final int numeroSequencialEvento, final String protocoloEconf) throws Exception {
-        if (this.wsCancelamentoEconf == null) {
-            this.wsCancelamentoEconf = new WSCancelamentoEconf(this.config, this.httpClient);
-        }
-        return this.wsCancelamentoEconf
+        return new WSCancelamentoEconf(this.config, this.httpClient)
                 .adicionarDadosEvento(chaveAcesso, numeroSequencialEvento, protocoloEconf)
                 .gerarEnviarEvento();
     }
