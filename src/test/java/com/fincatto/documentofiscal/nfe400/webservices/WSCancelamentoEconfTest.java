@@ -36,21 +36,20 @@ public class WSCancelamentoEconfTest {
     public void naoDevePermitirChaveDeNFCe() {
         final WSCancelamentoEconf wsCancelamentoEconf = new WSCancelamentoEconf(new NFeConfigFake(), null);
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> wsCancelamentoEconf.adicionarDadosEvento(CHAVE_NFCE, 1, PROTOCOLO_ECONF));
+                () -> wsCancelamentoEconf.gerarDadosXml(CHAVE_NFCE, 1, PROTOCOLO_ECONF));
     }
 
     @Test
     public void naoDevePermitirChaveInvalida() {
         final WSCancelamentoEconf wsCancelamentoEconf = new WSCancelamentoEconf(new NFeConfigFake(), null);
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> wsCancelamentoEconf.adicionarDadosEvento("65", 1, PROTOCOLO_ECONF));
+                () -> wsCancelamentoEconf.gerarDadosXml("65", 1, PROTOCOLO_ECONF));
     }
 
     @Test
     public void naoDevePermitirProtocoloDoEconfInvalido() {
-        final WSCancelamentoEconf wsCancelamentoEconf = new WSCancelamentoEconf(new NFeConfigFake(), null)
-                .adicionarDadosEvento(CHAVE_NFE, 1, "123");
-        Assertions.assertThrows(IllegalStateException.class, wsCancelamentoEconf::gerarDadosXml);
+        final WSCancelamentoEconf wsCancelamentoEconf = new WSCancelamentoEconf(new NFeConfigFake(), null);
+        Assertions.assertThrows(IllegalStateException.class, () -> wsCancelamentoEconf.gerarDadosXml(CHAVE_NFE, 1, "123"));
     }
 
     @Test
@@ -102,8 +101,7 @@ public class WSCancelamentoEconfTest {
 
     private NFEnviaEventoCancelamentoEconf gerarEnvio() {
         return new WSCancelamentoEconf(new NFeConfigFake(), null)
-                .adicionarDadosEvento(CHAVE_NFE, 1, PROTOCOLO_ECONF)
-                .gerarDadosXml();
+                .gerarDadosXml(CHAVE_NFE, 1, PROTOCOLO_ECONF);
     }
 
 }

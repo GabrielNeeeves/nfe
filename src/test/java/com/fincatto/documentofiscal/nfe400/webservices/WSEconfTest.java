@@ -40,14 +40,14 @@ public class WSEconfTest {
     public void naoDevePermitirChaveDeNFCe() {
         final WSEconf wsEconf = new WSEconf(new NFeConfigFake(), null);
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> wsEconf.adicionarDadosEvento(CHAVE_NFCE, 1, Collections.singletonList(FabricaDeObjetosFake.getNFDetPagEconf())));
+                () -> wsEconf.gerarDadosXml(CHAVE_NFCE, 1, Collections.singletonList(FabricaDeObjetosFake.getNFDetPagEconf())));
     }
 
     @Test
     public void naoDevePermitirChaveInvalida() {
         final WSEconf wsEconf = new WSEconf(new NFeConfigFake(), null);
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> wsEconf.adicionarDadosEvento("65", 1, Collections.singletonList(FabricaDeObjetosFake.getNFDetPagEconf())));
+                () -> wsEconf.gerarDadosXml("65", 1, Collections.singletonList(FabricaDeObjetosFake.getNFDetPagEconf())));
     }
 
     @Test
@@ -87,8 +87,7 @@ public class WSEconfTest {
 
     private NFEnviaEventoEconf gerarEnvio(final NFDetPagEconf pagamento) {
         return new WSEconf(new NFeConfigFake(), null)
-                .adicionarDadosEvento(CHAVE_NFE, 1, Collections.singletonList(pagamento))
-                .gerarDadosXml();
+                .gerarDadosXml(CHAVE_NFE, 1, Collections.singletonList(pagamento));
     }
 
     private String comAssinaturaFicticia(final NFEnviaEventoEconf envio) {
