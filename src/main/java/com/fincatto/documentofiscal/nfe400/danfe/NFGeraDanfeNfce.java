@@ -10,8 +10,13 @@ import com.fincatto.documentofiscal.utils.DFPersister;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,17 +75,17 @@ public class NFGeraDanfeNfce {
     /**
      * Cupom com margens laterais personalizadas, para compensar a area nao imprimivel de cada modelo de impressora termica.
      *
-     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link #MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link #MARGEM_LATERAL_MM}
-     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link #MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link #MARGEM_LATERAL_MM}
+     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link #MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link #MARGEM_LATERAL_MM}
+     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link #MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link #MARGEM_LATERAL_MM}
      */
-    public NFGeraDanfeNfce(final float margemEsquerdaMm, final float margemDireitaMm) {
+    public NFGeraDanfeNfce(final Float margemEsquerdaMm, final Float margemDireitaMm) {
         this.margemEsquerda = margemOuPadrao(margemEsquerdaMm) * DanfeCanvas.MM;
         this.margemDireita = margemOuPadrao(margemDireitaMm) * DanfeCanvas.MM;
     }
 
-    private static float margemOuPadrao(final float margemMm) {
+    private static float margemOuPadrao(final Float margemMm) {
         // comparacao negada: tambem cobre NaN
-        return margemMm >= 0f && margemMm <= MARGEM_LATERAL_MAXIMA_MM ? margemMm : MARGEM_LATERAL_MM;
+        return margemMm != null && margemMm >= 0f && margemMm <= MARGEM_LATERAL_MAXIMA_MM ? margemMm : MARGEM_LATERAL_MM;
     }
 
     /**
@@ -236,7 +241,7 @@ public class NFGeraDanfeNfce {
             throw new IllegalArgumentException(MENSAGEM_XML_NAO_INFORMADO);
         }
         try {
-            if (xmlNfe.contains("<nfeProc")) {
+            if (raizEhNfeProc(xmlNfe)) {
                 return new DFPersister().read(NFNotaProcessada.class, xmlNfe);
             }
             final NFNotaProcessada processada = new NFNotaProcessada();
@@ -244,6 +249,18 @@ public class NFGeraDanfeNfce {
             return processada;
         } catch (final Exception e) {
             throw new IllegalArgumentException(MENSAGEM_XML_INVALIDO, e);
+        }
+    }
+
+    /** Diz se o elemento raiz do XML e o nfeProc, com ou sem prefixo de namespace (ex.: {@code <nfe:nfeProc>}). */
+    private static boolean raizEhNfeProc(final String xml) throws XMLStreamException {
+        final XMLInputFactory fabrica = XMLInputFactory.newInstance();
+        fabrica.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        final XMLStreamReader leitor = fabrica.createXMLStreamReader(new StringReader(xml));
+        try {
+            return leitor.nextTag() == XMLStreamConstants.START_ELEMENT && "nfeProc".equals(leitor.getLocalName());
+        } finally {
+            leitor.close();
         }
     }
 }

@@ -17,11 +17,12 @@ public final class DFXMLValidador {
     private static final String PACOTE_NFE400 = "schemas/PL_010g_v1.03";
     private static final String PACOTE_MDFE300 = "schemas/PL_MDFe_300b_NT012025_1.03";
     private static final String PACOTE_CTE300 = "schemas/PL_CTe_300a_NT2022.001";
-    private static final String PACOTE_CTE400 = "schemas/PL_CTe_400_NT2026.002_RTC_1.01";
+    private static final String PACOTE_CTE400 = "schemas/PL_CTe_400_NT2026.004_RTC_1.00";
     private static final String PACOTE_NFE_DIST_DFE = "schemas/PL_NFeDistDFe_102";
     private static final String PACOTE_CTE_DIST_DFE = "schemas/PL_CTeDistDFe_100";
     private static final String PACOTE_MDFE_DIST_DFE = "schemas/PL_MDFeDistDFe_100";
     private static final String PACOTE_EPEC = "schemas/Evento_EPEC_PL_v1.01";
+    private static final String PACOTE_ECONF = "schemas/Evento_Econf_v1.00";
 
     /**
      * Limite de maxOccurs aceito na compilacao dos schemas (o padrao do JDK e 5000 e alguns
@@ -251,6 +252,10 @@ public final class DFXMLValidador {
         return DFXMLValidador.validaCTe400(arquivoXML, "evIECTe_v4.00.xsd");
     }
 
+    public static boolean validaEventoApropriacaoCreditoPresumidoCTe400(final String arquivoXML) throws Exception {
+        return DFXMLValidador.validaCTe400(arquivoXML, "evApropriaCredPres_v4.00.xsd");
+    }
+
     public static boolean validaDistribuicaoCTe(final String arquivoXML) throws IOException, SAXException, URISyntaxException {
         return DFXMLValidador.valida(arquivoXML, DFXMLValidador.PACOTE_CTE_DIST_DFE, "distDFeInt_v1.00.xsd");
     }
@@ -269,5 +274,13 @@ public final class DFXMLValidador {
 
     public static boolean validaEventoEpec(final String arquivoXML) throws Exception {
         return DFXMLValidador.valida(arquivoXML, DFXMLValidador.PACOTE_EPEC, "EPEC_v1.00.xsd");
+    }
+
+    public static boolean validaEconf(final String arquivoXML) throws IOException, SAXException {
+        return DFXMLValidador.valida(arquivoXML, DFXMLValidador.PACOTE_ECONF, "envEventoEConf_v1.00.xsd");
+    }
+
+    public static boolean validaCancelamentoEconf(final String arquivoXML) throws IOException, SAXException {
+        return DFXMLValidador.valida(arquivoXML, DFXMLValidador.PACOTE_ECONF, "envEventoCancEConf_v1.00.xsd");
     }
 }

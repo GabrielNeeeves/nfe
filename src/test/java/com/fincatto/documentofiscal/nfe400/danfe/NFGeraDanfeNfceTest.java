@@ -112,6 +112,22 @@ class NFGeraDanfeNfceTest {
         }
     }
 
+    @Test
+    void deveGerarOMesmoDocumentoQuandoOXmlUsaPrefixoDeNamespace() throws Exception {
+        final String xml = DanfeNfceFixtures.xml();
+        final String xmlComPrefixo = xml.replaceAll("<(/?)([A-Za-z])", "<$1nfe:$2").replace(" xmlns=\"", " xmlns:nfe=\"");
+        Assertions.assertTrue(xmlComPrefixo.startsWith("<nfe:nfeProc "));
+        Assertions.assertEquals(textoDe(xml), textoDe(xmlComPrefixo));
+    }
+
+    @Test
+    void deveLerANFeSozinhaMesmoComNfeProcCitadoEmComentario() throws Exception {
+        final String xml = DanfeNfceFixtures.nfce().tipoEmissao("9").semProtocolo().build();
+        final String xmlComComentario = xml.replace("<infNFe ", "<!-- <nfe:nfeProc> --><infNFe ");
+        Assertions.assertNotEquals(xml, xmlComComentario);
+        Assertions.assertEquals(textoDe(xml), textoDe(xmlComComentario));
+    }
+
     /** Texto do PDF com os espacos e quebras de linha normalizados em um espaco. */
     private static String texto(final byte[] pdf) throws Exception {
         try (final PDDocument documento = Loader.loadPDF(pdf)) {
@@ -149,12 +165,11 @@ class NFGeraDanfeNfceTest {
     @Test
     void deveImprimirItensComCodigoDescricaoQuantidadeUnidadeValoresEmReais() throws Exception {
         final String texto = textoDe(DanfeNfceFixtures.xml());
-        Assertions.assertTrue(texto.contains("C\u00d3DIGO DESCRI\u00c7\u00c3O"));
-        Assertions.assertTrue(texto.contains("QUANTIDADE UN VL.UNIT. VL.TOTAL"));
+        Assertions.assertTrue(texto.contains("C\u00d3DIGO DESCRI\u00c7\u00c3O QTDE UN VL UNIT VL TOTAL"));
         Assertions.assertTrue(texto.contains("7894900681017 SPRITE ORIGINAL LT350ML"));
-        Assertions.assertTrue(texto.contains("1 UN R$ 6,00 R$ 6,00"));
-        Assertions.assertTrue(texto.contains("3 UN R$ 4,00 R$ 12,00"));
-        Assertions.assertTrue(texto.contains("10 UN R$ 6,30 R$ 63,00"));
+        Assertions.assertTrue(texto.contains("1 UN 6,00 6,00"));
+        Assertions.assertTrue(texto.contains("3 UN 4,00 12,00"));
+        Assertions.assertTrue(texto.contains("10 UN 6,30 63,00"));
     }
 
     @Test
@@ -208,7 +223,7 @@ class NFGeraDanfeNfceTest {
     void deveImprimirValoresGrandes() throws Exception {
         final String xml = DanfeNfceFixtures.nfce().desconto("").item("999", "ITEM CARO", "1.0000", "UN", "999999.99", "999999.99").build();
         final String texto = textoDe(xml);
-        Assertions.assertTrue(texto.contains("R$ 999.999,99 R$ 999.999,99"));
+        Assertions.assertTrue(texto.contains("999.999,99 999.999,99"));
         Assertions.assertTrue(texto.contains("VALOR TOTAL R$ 999.999,99"));
     }
 
@@ -584,6 +599,15 @@ class NFGeraDanfeNfceTest {
         final String xml = DanfeNfceFixtures.nfce().build();
         Assertions.assertTrue(new NFGeraDanfeNfce(0f, 0f).gerar(xml, null).length > 0);
         Assertions.assertTrue(new NFGeraDanfeNfce(10f, 10f).gerar(xml, null).length > 0);
+    }
+
+    @Test
+    void deveUsarMargemPadraoQuandoMargemLateralNula() throws Exception {
+        final String xml = DanfeNfceFixtures.nfce().build();
+        final float[] padrao = limitesHorizontais(gerador.gerar(xml, null));
+        final float[] limites = limitesHorizontais(new NFGeraDanfeNfce(null, null).gerar(xml, null));
+        Assertions.assertEquals(padrao[0], limites[0], 0.01f, "esquerda");
+        Assertions.assertEquals(padrao[1], limites[1], 0.01f, "direita");
     }
 
     @Test

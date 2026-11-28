@@ -23,6 +23,7 @@ import com.fincatto.documentofiscal.nfe400.classes.evento.apropriacaobens.NFDetG
 import com.fincatto.documentofiscal.nfe400.classes.evento.apropriacaocomb.NFDetGrupoConsumoCombustivel;
 import com.fincatto.documentofiscal.nfe400.classes.evento.apropriacaocredito.NFDetGrupoCreditoPresumido;
 import com.fincatto.documentofiscal.nfe400.classes.evento.cartacorrecao.NFProtocoloEventoCartaCorrecao;
+import com.fincatto.documentofiscal.nfe400.classes.evento.conciliacaofinanceira.NFDetPagEconf;
 import com.fincatto.documentofiscal.nfe400.classes.evento.consumopessoal.NFDetGrupoConsumo;
 import com.fincatto.documentofiscal.nfe400.classes.evento.epec.NFEnviaEventoEpecRetorno;
 import com.fincatto.documentofiscal.nfe400.classes.evento.imobilizacao.NFDetGrupoImobilizacao;
@@ -83,6 +84,8 @@ public class WSFacade implements Closeable {
     private volatile WSAceiteDebitoApuracao wsAceiteDebitoAPuracao;
     private volatile WSCancelametoEvento wsCancelametoEvento;
     private volatile WSInfoEfetPagIntegral wsInfoEfetPagIntegral;
+    private volatile WSEconf wsEconf;
+    private volatile WSCancelamentoEconf wsCancelamentoEconf;
     private volatile WSSolicitacaoApropriacaoCreditoPresumido wsSolicitacaoApropriacaoCreditoPresumido;
     private volatile WSSolicitacaoApropriacaoCreditoCombustivel wsSolicitacaoApropriacaoCreditoCombustivel;
     private volatile WSRouboTransporteAdquirente wsRouboTransporteAdquirente;
@@ -258,12 +261,12 @@ public class WSFacade implements Closeable {
      * @param xmlNfe XML do nfeProc (NFC-e autorizada) ou, em contingencia off-line, da NFe ainda sem protocolo
      * @param creditos creditos (textos do rodape); se nulo, o cupom sai sem rodape personalizado
      * @param anexos blocos de texto impressos depois do cupom, cada um depois de uma linha de corte; a lista pode ser nula ou vazia
-     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
-     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
+     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
+     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
      * @return bytes do PDF
      * @throws IllegalArgumentException se o XML for invalido, nao for de uma NFC-e, nao tiver o protocolo de autorizacao ou a lista tiver um anexo nulo
      */
-    public byte[] geraDanfeNfce(final String xmlNfe, final DanfeCreditos creditos, final List<DanfeNfceAnexo> anexos, final float margemEsquerdaMm, final float margemDireitaMm) {
+    public byte[] geraDanfeNfce(final String xmlNfe, final DanfeCreditos creditos, final List<DanfeNfceAnexo> anexos, final Float margemEsquerdaMm, final Float margemDireitaMm) {
         return new NFGeraDanfeNfce(margemEsquerdaMm, margemDireitaMm).gerar(xmlNfe, creditos, anexos);
     }
 
@@ -274,12 +277,12 @@ public class WSFacade implements Closeable {
      * @param nota nota processada (NFC-e com o protocolo de autorizacao)
      * @param creditos creditos (textos do rodape); se nulo, o cupom sai sem rodape personalizado
      * @param anexos blocos de texto impressos depois do cupom, cada um depois de uma linha de corte; a lista pode ser nula ou vazia
-     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
-     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; fora da faixa (ou NaN) usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
+     * @param margemEsquerdaMm margem da esquerda, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
+     * @param margemDireitaMm margem da direita, em milimetros, de 0 a {@link NFGeraDanfeNfce#MARGEM_LATERAL_MAXIMA_MM}; nulo, fora da faixa ou NaN usa {@link NFGeraDanfeNfce#MARGEM_LATERAL_MM}
      * @return bytes do PDF
      * @throws IllegalArgumentException se a nota for nula, incompleta, nao for de uma NFC-e, nao tiver o protocolo de autorizacao ou a lista tiver um anexo nulo
      */
-    public byte[] geraDanfeNfce(final NFNotaProcessada nota, final DanfeCreditos creditos, final List<DanfeNfceAnexo> anexos, final float margemEsquerdaMm, final float margemDireitaMm) {
+    public byte[] geraDanfeNfce(final NFNotaProcessada nota, final DanfeCreditos creditos, final List<DanfeNfceAnexo> anexos, final Float margemEsquerdaMm, final Float margemDireitaMm) {
         return new NFGeraDanfeNfce(margemEsquerdaMm, margemDireitaMm).gerar(nota, creditos, anexos);
     }
 
@@ -772,6 +775,40 @@ public class WSFacade implements Closeable {
         return this.wsInfoEfetPagIntegral
                 .adicionarDadosEvento(chaveAcesso, ufEmitenteEvento, numeroSequencialEvento)
                 .gerarEnviarEvento();
+    }
+
+    /**
+     * Gera XML e faz envio do evento de conciliação financeira (ECONF), que informa à SEFAZ os pagamentos
+     * relacionados a uma NF-e. Suportado apenas para a NF-e (modelo 55).
+     *
+     * @param chaveAcesso chave de acesso da NF-e
+     * @param numeroSequencialEvento número sequencial do evento (1 a 99)
+     * @param pagamentos pagamentos a informar (1 a 100)
+     * @return {@link NFEnviaEventoRetorno} dados do evento retornado pelo webservice
+     * @throws Exception
+     */
+    public NFEnviaEventoRetorno enviaEconf(final String chaveAcesso, final int numeroSequencialEvento, final List<NFDetPagEconf> pagamentos) throws Exception {
+        if (this.wsEconf == null) {
+            this.wsEconf = new WSEconf(this.config, this.httpClient);
+        }
+        return this.wsEconf.enviaEvento(chaveAcesso, numeroSequencialEvento, pagamentos);
+    }
+
+    /**
+     * Gera XML e faz envio do cancelamento do evento de conciliação financeira (ECONF).
+     * Suportado apenas para a NF-e (modelo 55).
+     *
+     * @param chaveAcesso chave de acesso da NF-e
+     * @param numeroSequencialEvento número sequencial do evento (1 a 99)
+     * @param protocoloEconf número do protocolo de autorização do ECONF a cancelar (15 dígitos)
+     * @return {@link NFEnviaEventoRetorno} dados do evento retornado pelo webservice
+     * @throws Exception
+     */
+    public NFEnviaEventoRetorno enviaCancelamentoEconf(final String chaveAcesso, final int numeroSequencialEvento, final String protocoloEconf) throws Exception {
+        if (this.wsCancelamentoEconf == null) {
+            this.wsCancelamentoEconf = new WSCancelamentoEconf(this.config, this.httpClient);
+        }
+        return this.wsCancelamentoEconf.enviaEvento(chaveAcesso, numeroSequencialEvento, protocoloEconf);
     }
 
     /**
